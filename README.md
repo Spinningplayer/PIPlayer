@@ -11,6 +11,12 @@ navigate to this folder and the working directory should be
 $ pwd
 /home/pi/Apps/PIPlayer/
 ```
+
+install the following dependencies
+```sh
+$ pip install pathlib omxplayer-wrapper pathlib
+```
+
 Now move the PIPlayer shell script to /etc/init.d and give it the right permissions
 ```sh
 $ sudo mv PIPlayer /etc/init.d

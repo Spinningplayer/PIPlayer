@@ -4,16 +4,21 @@ from pathlib import Path
 from wand.image import Image
 import RPi.GPIO as GPIO
 import wand
+import os
+import time
 
 app = Flask(__name__)
-player = None
 path = Path("/home/pi/Videos/Video.mp4")
 imagePath = Path("./nee.png")
 
+player = None
+
+state = False
+
 GPIO.setwarnings(False)
 GPIO.setmode(GPIO.BCM)
-GPIO.setup(1, GPIO.IN, pull_up_down = GPIO.PUD_OFF)
-
+GPIO.setup(4, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+GPIO.setup(17, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
 
 @app.route('/')
 def test():
@@ -28,8 +33,9 @@ def favicon():
 @app.route('/play')
 def play():
     try:
+	os.system('killall omxplayer.bin')
         global player
-        player = OMXPlayer(path)
+        player = Player(path)
         return "success"
     except Exception as e:
         print(e)
@@ -39,6 +45,7 @@ def play():
 @app.route('/stop')
 def stop():
     try:
+	global player
         player.quit()
         return "success"
     except Exception as e:
@@ -61,9 +68,44 @@ def display():
         print(e)
         return "error: couldn't display image"
 
+def playVideo(pin):
+	global state
+	global player
+	if not state:
+    		try:
+			print("Starting video")
+        		player = OMXPlayer(path)
+			state = False
+			time.sleep(5)
+        		return "success"
+    		except Exception as e:
+        		print(e)
+        		return "error"
+	else:
+		try:
+			print("Stopping video")
+			player.quit
+			os.command('killall omxplayer')
+			state = True
+			time.sleep(5)
+			return "success"
+		except Exception as e:
+ 			print(e)
+			return "error"
 
-GPIO.add_event_detect(1, GPIO.RISING, callback=play)
 
+def stopVideo(pin):
+    try:
+	global player
+	player.quit()
+        return "success"
+    except Exception as e:
+        print(e)
+        return "error"
+
+
+GPIO.add_event_detect(4, GPIO.FALLING, callback=playVideo, bouncetime=5000)
+GPIO.add_event_detect(17, GPIO.RISING, callback=stopVideo, bouncetime=5000)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=1337)
